@@ -51,3 +51,34 @@ class InternshipPlacement(models.Model):
         return f"{self.student.username}@{self.company_name}"
     
 class WeeklyLog(models.Model):
+    STATUS_CHOICES = [
+        ('draft','Draft'),
+        ('submitted','Submitted'),
+        ('reviewed','Reviewed'),
+        ('approved','Approved')
+    ]
+
+    placement = models.ForeignKey(InternshipPlacement,
+                                  on_delete = models.CASCADE,
+                                  related_name = 'weekly_logs'
+                                  )
+    
+    week_number = models.PositiveIntegerField()
+    activities = models.TextField()
+
+    challenges = models.TextField(null= True, blank= True)
+    skills_gained = models.TextField(null= True, blank = True)
+
+    status = models.CharField(max_length=20,
+                              choices = STATUS_CHOICES,
+                              default= 'draft')
+    
+    submitted_at= models.DateTimeField(null= True, blank= True)
+    created_at =models.DateTimeField(auto_now_add= True)
+    updated_at= models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together= ('placement','week_number')
+
+    def __str__(self):
+        return f"Week {self.week_number} - {self.placement.student.username}"
