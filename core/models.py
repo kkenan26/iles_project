@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.utils import timezone
 
 # Create your models here.
 class CustomUser(AbstractUser):
@@ -82,3 +83,32 @@ class WeeklyLog(models.Model):
 
     def __str__(self):
         return f"Week {self.week_number} - {self.placement.student.username}"
+
+class EvaluationCriteria(models.Model):
+    name =models.CharField(max_length= 100, unique=True)
+    description =models.TextField(null=True, blank=True)
+    weight = models.DecimalField(max_digits= 5, decimal_places= 2)
+    is_active=models.BooleanField(default= True)
+
+    class Meta:
+        verbose_name_plural= "Evaluation Criteria"
+    def __str__(self):
+        return f"{self.name}: {self.weight}"
+
+class Evaluation(models.Model):
+    placement= models.ForeignKey(InternshipPlacement,
+    on_delete=models.CASCADE, related_name='evaluations')
+    criteria= models.ForeignKey(EvaluationCriteria, on_delete=models.CASCADE, related_name='evaluated_criteria')
+    evaluator = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='student_evaluator')
+    score=models.DecimalField(max_digits=5, decimal_places=2)
+    comments= models.TextField(null =True, blank=True)
+    evaluated_at= models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        unique_together= ('placement','criteria')
+
+    def weighted_score(self):
+        return (self.score * self.criteria.weight)/100
+
+    def __str__(self):
+        return f"{self.criteria}: {self.score}"    
